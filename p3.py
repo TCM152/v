@@ -1,5 +1,12 @@
 import subprocess
 import sys
+import site
+
+# Add user site-packages to path (for Cloud Shell)
+user_site = site.getusersitepackages()
+if user_site not in sys.path:
+    sys.path.insert(0, user_site)
+    print(f"[+] Added {user_site} to PATH")
 
 # Auto-install dependencies
 def install_dependencies():
@@ -13,8 +20,14 @@ def install_dependencies():
         except ImportError:
             print(f"[!] Installing {package}...")
             try:
-                subprocess.check_call([sys.executable, "-m", "pip", "install", package, "--quiet"])
+                # Install with --user flag for Cloud Shell
+                subprocess.check_call([sys.executable, "-m", "pip", "install", package, "--user", "--quiet"])
                 print(f"[✓] {package} installed successfully")
+                
+                # Reload sys.path after installation
+                import importlib
+                importlib.invalidate_caches()
+                
             except subprocess.CalledProcessError as e:
                 print(f"[✗] Failed to install {package}: {e}")
                 sys.exit(1)
